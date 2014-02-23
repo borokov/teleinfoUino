@@ -1,3 +1,7 @@
+#ifndef _TELEINFO_
+#define _TELEINFO_
+
+#include <SoftwareSerial.h>
 
 #define FRAME_BUFF_LEN 512
 
@@ -14,6 +18,8 @@ class Teleinfo
 {
 public:
   Teleinfo();
+
+  void setup();
 
   // read a frame
   const char* readFrame();
@@ -35,6 +41,8 @@ private:
   char cksum(const char* buff, int buffLen);
 
 
+  SoftwareSerial m_cptSerial;
   char m_frameBuff[FRAME_BUFF_LEN];
 };
 
+#endif

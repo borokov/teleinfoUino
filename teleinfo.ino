@@ -5,13 +5,16 @@ SoftwareSerial cptSerial(9, 3);
 Teleinfo teleinfo;
 
 void setup() {
-  //teleinfo.setup();
-  cptSerial.begin(1200);
+  teleinfo.setup();
 }
 
 void loop() 
 {
- teleinfo.readFrame();
+  const char* buff = teleinfo.readFrame();
+  Serial.println("*****************************************");
+  Serial.write(buff);
+  Serial.println("*****************************************");
+
   delay(1000);
 }
 

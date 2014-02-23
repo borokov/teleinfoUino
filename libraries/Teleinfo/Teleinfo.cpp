@@ -1,4 +1,5 @@
 #include "Teleinfo.h"
+#include "Arduino.h"
 
 #define STX 0x02 // Start Text. Start of frame.
 #define ETX 0x03 // End Text. End of frame.
@@ -10,7 +11,19 @@
 
 //-------------------------------------------
 Teleinfo::Teleinfo()
+: m_cptSerial(9, 3)
 {
+}
+
+//-------------------------------------------
+void 
+Teleinfo::setup() 
+{
+  Serial.begin(1200);     // opens serial port, sets data rate to 1200 bps
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for Leonardo only
+  }
+  m_cptSerial.begin(1200);
 }
 
 //-------------------------------------------
@@ -23,14 +36,14 @@ Teleinfo::readFrame()
   do
   {
     success = tryReadFrame(m_frameBuff);
-  } while ( !success )
+  } while ( !success );
 
   return m_frameBuff;
 }
 
 //-------------------------------------------
 bool 
-tryReadFrame(char* buff)
+Teleinfo::tryReadFrame(char* buff)
 {
   char value = 0;
   // wait for begining of frame
@@ -114,7 +127,7 @@ Teleinfo::readGroup(char*& buff)
     }
     *ptr++ = value;
     grpLen++;
-  } while ( value != CR )
+  } while ( value != CR );
 
   if ( cksum(buff, grpLen - 2) != buff[grpLen - 2] )
   {
