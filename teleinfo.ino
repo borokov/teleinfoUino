@@ -25,7 +25,7 @@ void loop()
 
   send(frame);
 
-  delay(5000);
+  delay(24UL * 60UL * 60UL * 1000UL);
 }
 
 void send(const Frame& frame)
