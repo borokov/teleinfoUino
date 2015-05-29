@@ -3,6 +3,7 @@
 
 #include <SoftwareSerial.h>
 
+// max len of a frame
 #define FRAME_BUFF_LEN 512
 
 typedef struct Frame 
@@ -22,7 +23,7 @@ public:
   // must be called in setup()
   void setup();
 
-  // read a frame
+  // read a frame. This call is blocking until a frame is properly read
   const char* readFrame();
 
   // create a frame from framebuffer
@@ -45,7 +46,7 @@ private:
 
   void parseGroupe(const char*& buff, char* label, char* value);
 
-  // print error on serial is m_verbose is true
+  // print error on serial if m_verbose is true
   void printError(const char* msg);
 
   bool m_verbose;

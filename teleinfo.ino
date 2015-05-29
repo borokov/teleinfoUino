@@ -8,9 +8,11 @@ Teleinfo teleinfo;
 
 EthernetClient client;
 
-void setup() {
+void setup() 
+{
   teleinfo.setup();
 
+  // mac adress of server
   byte mac[] = {  0x90, 0xA2, 0xDA, 0x0E, 0xC0, 0x92 };
   Ethernet.begin(mac); // return 0 if failled
   
@@ -25,6 +27,7 @@ void loop()
 
   send(frame);
 
+  // wait for some day
   delay(24UL * 60UL * 60UL * 1000UL);
 }
 
