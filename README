@@ -1,1 +1,4 @@
 Cette lib permet de lire les trames Téléinfo des compeur EDF.
+
+teleinfo.ino montre un exemple d'utilisation couplé à un shield ethernet. 
+La consommation est relevé tout les jour et posté sur un server.
