@@ -1,4 +1,4 @@
-Cette lib permet de lire les trames Téléinfo des compeur EDF.
+Cette lib permet de lire les trames Téléinfo des compeur EDF. Voir https://www.arduino.cc/en/Guide/Libraries pour comment installer une lib.
 
 teleinfo.ino montre un exemple d'utilisation couplé à un shield ethernet. 
 La consommation est relevé tout les jour et posté sur un server.
