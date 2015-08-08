@@ -12,7 +12,7 @@ void setup()
 {
   teleinfo.setup();
 
-  // mac adress of server
+  // mac adress of arduino board
   byte mac[] = {  0x90, 0xA2, 0xDA, 0x0E, 0xC0, 0x92 };
   Ethernet.begin(mac); // return 0 if failled
   
