@@ -6,7 +6,7 @@
 // max len of a frame
 #define FRAME_BUFF_LEN 512
 
-typedef struct Frame 
+typedef struct Frame
 {
   char PTEC[3]; // tarif courant (HC\0, HP\0)
   long HCHC; // conso heure creuse
@@ -21,7 +21,9 @@ public:
   Teleinfo();
 
   // must be called in setup()
-  void setup();
+  // If verbose is true, will print information in serial.
+  // Serial shoulf br at 1200 baud
+  void setup(bool verbose);
 
   // read a frame. This call is blocking until a frame is properly read
   const char* readFrame();
@@ -30,7 +32,7 @@ public:
   Frame parse(const char* frameBuff);
 
 private:
- 
+
   // try to read creent frame. Return success.
   bool tryReadFrame(char* buff);
 
@@ -49,9 +51,9 @@ private:
   // print error on serial if m_verbose is true
   void printError(const char* msg);
 
-  bool m_verbose;
   SoftwareSerial m_cptSerial;
   char m_frameBuff[FRAME_BUFF_LEN];
+  bool m_verbose;
 };
 
 #endif

@@ -17,9 +17,10 @@ Teleinfo::Teleinfo()
 }
 
 //-------------------------------------------
-void 
-Teleinfo::setup() 
+void
+Teleinfo::setup(bool verbose)
 {
+  m_verbose = verbose;
   if ( m_verbose )
   {
     Serial.begin(1200);     // opens serial port, sets data rate to 1200 bps
@@ -31,12 +32,12 @@ Teleinfo::setup()
 }
 
 //-------------------------------------------
-Frame 
+Frame
 Teleinfo::parse(const char* frameBuff)
 {
   const char* ptr = frameBuff;
   Frame frame;
-  
+
   while ( *ptr != ETX )
   {
     // got to begining of group
@@ -75,7 +76,7 @@ Teleinfo::parse(const char* frameBuff)
         frame.PTEC[2] = '\0';
       }
     }
-    
+
   }
   return frame;
 }
@@ -100,7 +101,7 @@ Teleinfo::parseGroupe(const char*& ptr, char* label, char* value)
 }
 
 //-------------------------------------------
-const char* 
+const char*
 Teleinfo::readFrame()
 {
   memset(m_frameBuff, '\0', FRAME_BUFF_LEN);
@@ -115,7 +116,7 @@ Teleinfo::readFrame()
 }
 
 //-------------------------------------------
-bool 
+bool
 Teleinfo::tryReadFrame(char* buff)
 {
   char value = 0;
@@ -148,7 +149,7 @@ Teleinfo::tryReadFrame(char* buff)
     }
     // now value = LF or ETX
 
-    // begining of groupe 
+    // begining of groupe
     if ( value == LF )
     {
       if ( !readGroup(ptr) )
@@ -178,7 +179,7 @@ Teleinfo::readValue()
 }
 
 //-------------------------------------------
-bool 
+bool
 Teleinfo::readGroup(char*& buff)
 {
   if ( buff[-1] != LF )
@@ -225,7 +226,7 @@ Teleinfo::cksum(const char* buff, int buffLen)
 }
 
 //-------------------------------------------
-void 
+void
 Teleinfo::printError(const char* msg)
 {
   if ( m_verbose )
