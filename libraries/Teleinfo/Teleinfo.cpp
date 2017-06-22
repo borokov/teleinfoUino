@@ -230,5 +230,9 @@ void
 Teleinfo::printError(const char* msg)
 {
   if ( m_verbose )
-    Serial.write("ERROR readGroup: bad checksum\n");
+  {
+    Serial.write("ERROR: ");
+    Serial.write(msg);
+  }
+
 }
