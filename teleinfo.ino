@@ -14,13 +14,16 @@ void setup()
   // mac adress of server (the arduino board)
   byte mac[] = {  0x90, 0xA2, 0xDA, 0x0E, 0xC0, 0x92 };
   Ethernet.begin(mac); // return 0 if failled
-
+  pinMode(LED_BUILTIN, OUTPUT);
   // give the Ethernet shield a second to initialize:
   delay(1000);
 }
 
 void loop() 
 {
+  // Led is ON during frame reading and OFF while waiting 1h
+  digitalWrite(LED_BUILTIN, HIGH);
+
   // try to read and send EDF conso until succeed
   bool ok = false;
   do
@@ -30,6 +33,8 @@ void loop()
     ok = send(frame);
   }
   while ( !ok );
+
+  digitalWrite(LED_BUILTIN, LOW);
 
   // Wait for 1h.
   // For some reason my Arduino board seems 3 times slower than expected.
