@@ -66,9 +66,9 @@ bool send(const Frame& frame)
 
   // now we will read client response. Response should contains a pattern to be valid.
   // if pattern if found, it means success, else something gone wrong.
-  char* pattern = "done";
+  const char* pattern = "done";
   // current char in pattern.
-  char* patternChar = pattern;
+  const char* patternChar = pattern;
   bool patternFound = false;
   while(client.connected())
   {
