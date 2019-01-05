@@ -54,7 +54,7 @@ bool send(const Frame& frame)
   client.println("Content-Type: application/x-www-form-urlencoded");
 
   char buff1[32];
-  sprintf(buff1, "hc=%ld&hp=%ld", frame.HCHC, frame.HCHP);
+  sprintf(buff1, "hc=%ld&hp=%ld&I=%d", frame.HCHC, frame.HCHP, frame.IINST);
   int buff1Len = strlen(buff1);
   char buff2[32];
   sprintf(buff2, "Content-Length: %d\r\n", buff1Len);
