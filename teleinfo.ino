@@ -28,8 +28,7 @@ void loop()
   bool ok = false;
   do
   {
-    const char* buff = teleinfo.readFrame();
-    Frame frame = teleinfo.parse(buff);
+    Frame frame = teleinfo.getFrame();
     ok = send(frame);
   }
   while ( !ok );

@@ -10,6 +10,110 @@
 #define CR 0x0D // Carriage Return. End of group.
 
 //-------------------------------------------
+Frame::Frame()
+{
+  memset(PTEC, 0, 3);
+  HCHC = -1;
+  HCHP = -1;
+  IINST = -1;
+  IMAX = -1;
+  m_validBits = 0;
+}
+
+//-------------------------------------------
+bool
+Frame::isValid()
+{
+  return m_validBits == 0x1F; //b00011111
+}
+
+//-------------------------------------------
+void
+Frame::fill(char* buff, char buffLen)
+{
+  // buff = (label)SP(value)SP(checksum)CR
+
+  // pointer to begining of label
+  char* labelPtr = buff;
+  // pointer to begining of value
+  char* valuePtr = NULL;
+  // volatil pointer
+  char* ptr = buff;
+
+  // Find label
+  while ( *ptr != SP && ptr - buff < buffLen )
+    *ptr++;
+
+  if ( ptr - buff >= buffLen )
+  {
+    //printError("Frame::fill-1 buffer overflow");
+    return;
+  }
+
+  // Replace SP char by \0 so that we can use strcmp function
+  *ptr = '\0';
+  ptr++;
+
+  valuePtr = ptr;
+
+  // Find value
+  while ( *ptr != SP && ptr - buff < buffLen )
+    *ptr++;
+
+  if ( ptr - buff >= buffLen )
+  {
+    //printError("Frame::fill-2 buffer overflow");
+    return;
+  }
+
+  // Replace SP char by \0 so that we can use strcmp function
+  *ptr = '\0';
+
+  // now buff = (label)\0(value)\0(checksum)CR
+  //            |        |
+  //         labelPtr  valuePtr
+
+  if ( !HCHCValid() && strcmp(buff, "HCHC") == 0 )
+  {
+    HCHC = atol(valuePtr);
+    setHCHCValid();
+    // printLog("HCH Filled\n");
+    return;
+  }
+  else if ( !HCHPValid() && strcmp(labelPtr, "HCHP") == 0 )
+  {
+    HCHP = atol(valuePtr);
+    setHCHPValid();
+    //printLog("HCHP Filled\n");
+    return;
+  }
+  else if ( !IINSTValid() && strcmp(labelPtr, "IINST") == 0 )
+  {
+    IINST = atoi(valuePtr);
+    setIINSTValid();
+    //printLog("IINST Filled\n");
+    return;
+  }
+  else if ( !IMAXValid() && strcmp(labelPtr, "IMAX") == 0 )
+  {
+    IMAX = atoi(valuePtr);
+    setIMAXValid();
+    //printLog("IMAX Filled\n");
+    return;
+  }
+  else if ( !PTECValid() && strcmp(labelPtr, "PTEC") == 0 )
+  {
+    PTEC[0] = valuePtr[0];
+    PTEC[1] = valuePtr[1];
+    PTEC[2] = '\0';
+    setPTECValid();
+    //printLog("PTEC Filled\n");
+    return;
+  }
+
+}
+
+//-------------------------------------------
 Teleinfo::Teleinfo()
 : m_cptSerial(9, 3)
 , m_verbose(false)
@@ -33,141 +137,43 @@ Teleinfo::setup(bool verbose)
 
 //-------------------------------------------
 Frame
-Teleinfo::parse(const char* frameBuff)
+Teleinfo::getFrame()
 {
-  const char* ptr = frameBuff;
+  memset(m_lineBuff, '\0', LINE_BUFF_LEN);
   Frame frame;
 
-  while ( *ptr != ETX )
+  // Connexion is really poor and I hardly manage to have a complete
+  // valid frame. So the idea is:
+  // For each received line, try to fill information in Frame.
+  // Once Frame is completly filled, return it
+  // This may require several frame to fully fill Frame.
+  while(!frame.isValid())
   {
-    // got to begining of group
-    while ( *ptr != LF && *ptr != ETX )
+    waitStartGroup();
+    int buffLen = readGroup(m_lineBuff, LINE_BUFF_LEN);
+    if ( buffLen > 0 )
     {
-      ptr++;
+      frame.fill(m_lineBuff, buffLen);
     }
-
-    if ( *ptr == LF )
-    {
-      ptr++;
-      char label[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-      char value[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-      parseGroupe(ptr, label, value);
-
-      if ( strcmp(label, "HCHC") == 0 )
-      {
-        frame.HCHC = atol(value);
-      }
-      else if ( strcmp(label, "HCHP") == 0 )
-      {
-        frame.HCHP = atol(value);
-      }
-      else if ( strcmp(label, "IINST") == 0 )
-      {
-        frame.IINST = atoi(value);
-      }
-      else if ( strcmp(label, "IMAX") == 0 )
-      {
-        frame.IMAX = atoi(value);
-      }
-      else if ( strcmp(label, "PTEC") == 0 )
-      {
-        frame.PTEC[0] = value[0];
-        frame.PTEC[1] = value[1];
-        frame.PTEC[2] = '\0';
-      }
-    }
-
   }
   return frame;
 }
 
 //-------------------------------------------
 void
-Teleinfo::parseGroupe(const char*& ptr, char* label, char* value)
-{
-  if ( ptr[-1] != LF )
-  {
-    printError("ERROR parseGroupe: Group does not begin with LF\n");
-    return;
-  }
-  char* ptrLabel = label;
-  char* ptrValue = value;
-  while ( *ptr != SP )
-    *ptrLabel++ = *ptr++;
-
-  ptr++;
-  while ( *ptr != SP )
-    *ptrValue++ = *ptr++;
-}
-
-//-------------------------------------------
-const char*
-Teleinfo::readFrame()
-{
-  memset(m_frameBuff, '\0', FRAME_BUFF_LEN);
-
-  bool success = false;
-  do
-  {
-    success = tryReadFrame(m_frameBuff);
-  } while ( !success );
-
-  return m_frameBuff;
-}
-
-//-------------------------------------------
-bool
-Teleinfo::tryReadFrame(char* buff)
+Teleinfo::waitStartGroup()
 {
   char value = 0;
   // wait for begining of frame
   do {
     value = readValue();
+    printLog(value);
     if ( value == EOT )
     {
-      printError("ERROR tryReadFrame: EOT\n");
-      return false;
+      printError("waitStartGroup: EOT");
     }
-  } while(value != STX);
-  // now value = STX
-
-  char* ptr = buff;
-  *ptr++ = value;
-
-  while ( value != ETX )
-  {
-    // wait for begining of groupe
-    while ( value != LF && value != ETX )
-    {
-      value = readValue();
-      if ( value == EOT )
-      {
-        printError("ERROR tryReadFrame: EOT\n");
-        return false;
-      }
-      *ptr++ = value;
-    }
-    // now value = LF or ETX
-
-    // begining of groupe
-    if ( value == LF )
-    {
-      if ( !readGroup(ptr) )
-      {
-        printError("ERROR tryReadFrame: Error while reading group.\n");
-        return false;
-      }
-      if ( *ptr != CR )
-      {
-        printError("ERROR tryReadFrame: Bad end of group\n");
-        return false;
-      }
-      value = *ptr;
-    }
-
-  }
-
-  return true;
+  } while(value != LF);
+  printLog("LOG: New Group\n");
 }
 
 //-------------------------------------------
@@ -179,43 +185,47 @@ Teleinfo::readValue()
 }
 
 //-------------------------------------------
-bool
-Teleinfo::readGroup(char*& buff)
+char
+Teleinfo::readGroup(char* buff, char buffLen)
 {
-  if ( buff[-1] != LF )
-  {
-    printError("ERROR readGroup: Group does not start by SP\n");
-    return false;
-  }
-
   char value = 0;
   char* ptr = buff;
-  int grpLen = 0;
+  char grpLen = 0;
+  char wantedChecksum = 0;
+  char computedChecksum = 0;
   do
   {
     value = readValue();
+    printLog(value);
     if ( value == EOT )
     {
       printError("ERROR readGroup: EOT\n");
-      return false;
+      return 0;
     }
     *ptr++ = value;
     grpLen++;
-  } while ( value != CR );
+  } while ( value != CR && grpLen < buffLen );
 
-  if ( cksum(buff, grpLen - 3) != buff[grpLen - 2] )
+  if ( grpLen <= 3 )
   {
-    printError("ERROR readGroup: bad checksum\n");
-    return false;
+    printError("readGroup: Not enough character in group.\n");
+    return 0;
   }
 
-  buff = ptr-1;
-  return true;
+  wantedChecksum = buff[grpLen - 2];
+  computedChecksum = cksum(buff, grpLen - 3);
+  if ( computedChecksum != wantedChecksum )
+  {
+    printError("ERROR readGroup: bad checksum\n");
+    return 0;
+  }
+
+  return grpLen;
 }
 
 //-------------------------------------------
 char
-Teleinfo::cksum(const char* buff, int buffLen)
+Teleinfo::cksum(const char* buff, char buffLen)
 {
   char sum = 0;
   for (int i = 0; i < buffLen; i++)
@@ -233,6 +243,27 @@ Teleinfo::printError(const char* msg)
   {
     Serial.write("ERROR: ");
     Serial.write(msg);
+    Serial.write('\n');
   }
 
+}
+
+//-------------------------------------------
+void
+Teleinfo::printLog(const char* msg)
+{
+  if ( m_verbose )
+  {
+    Serial.write(msg);
+  }
+}
+
+//-------------------------------------------
+void
+Teleinfo::printLog(const char msg)
+{
+  if ( m_verbose )
+  {
+    Serial.write(msg);
+  }
 }
