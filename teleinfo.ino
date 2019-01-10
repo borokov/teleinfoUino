@@ -35,10 +35,6 @@ void loop()
 
   digitalWrite(LED_BUILTIN, LOW);
 
-  // Wait for 1h.
-  // For some reason my Arduino board seems 3 times slower than expected.
-  // I didn't find any solution, so wait for 20min to have 1h real life.
-  delay(20UL * 60UL * 1000UL);
 }
 
 bool send(const Frame& frame)
