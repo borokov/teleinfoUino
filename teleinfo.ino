@@ -51,7 +51,6 @@ bool send(const Frame& frame)
 
   char buff1[64];
   sprintf(buff1, "hc=%ld&hp=%ld&iinst=%d", frame.HCHC, frame.HCHP, frame.IINST);
-  Serial.write(buff1);
   int buff1Len = strlen(buff1);
   char buff2[32];
   sprintf(buff2, "Content-Length: %d\r\n", buff1Len);
